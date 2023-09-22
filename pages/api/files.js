@@ -10,22 +10,25 @@ export const config = {
   },
 };
 
-const saveFile = async (file) => {
+const saveFile = async (file, fields) => {
   try {
     const stream = fs.createReadStream(file.filepath);
     const options = {
       pinataMetadata: {
-        name: file.originalFilename,
+        name: fields.name,
+        keyvalues: {
+          description: fields.description
+        }
       },
     };
     const response = await pinata.pinFileToIPFS(stream, options);
     fs.unlinkSync(file.filepath);
-
     return response;
   } catch (error) {
     throw error;
   }
-};
+}
+
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -36,7 +39,7 @@ export default async function handler(req, res) {
           console.log({ err });
           return res.status(500).send("Upload Error");
         }
-        const response = await saveFile(files.file);
+        const response = await saveFile(files.file, fields);
         const { IpfsHash } = response;
 
         return res.send(IpfsHash);
